@@ -1,0 +1,2 @@
+default:
+	python Assigned_Satellites/velocity_functions.py

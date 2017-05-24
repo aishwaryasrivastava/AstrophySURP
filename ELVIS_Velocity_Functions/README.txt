@@ -1,0 +1,28 @@
+Type "python velocity_function.py" and follow the prompts to save the files
+This program does the following for both, isolated and paired halos 
+	- Finds galaxies across the ELVIS Halo Catalog that belong to the following stellar mass ranges: 
+		- range 1: 1.e7 Msun - 3.e7 Msun
+		- range 2: 1.e8 Msun - 3.e8 Msun
+		- range 3: 1.e9 Msun - 3.e9 Msun
+	- Finds the satellites of the hosts beloning to the 3 ranges
+	- Creates a velocity function for the satellites of 2 random hosts belonging to each range 
+		- Saves this hostogram as a .png file in the respective 'Range' folder
+	- Creates a stacked velocity function for all the ranges 
+		- Saves histogram as a .png file
+	- Creates a comparison of the velocity function of each range
+		- Saves histogram as a .png file
+	- Creates a comparison of the velocity function of satellites with Mstar < 1.e5 and > 1.e5 by range
+		- Saves histogram as a .png file
+	- Separates satellites with apeak < 0.5 and > 0.5 by range
+		- Saves this data as two separate .txt files
+	- Generates satellite data for each range
+		- Saves this data as a .txt file
+	- Generates satellites in one of 4 ways:
+		- Through PID/UpID
+		- Through distance
+		- Each of the above with Vpeak > 12 km/s
+	
+	
+	
+
+# AstrophySURP
