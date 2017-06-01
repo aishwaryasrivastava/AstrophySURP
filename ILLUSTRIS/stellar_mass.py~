@@ -1,0 +1,5 @@
+import sqlite3
+conn = sqlite3.connect('halos_and_subhalos.db')
+c = conn.cursor()
+
+c.execute("SELECT GroupMass, StellarMass FROM halos")

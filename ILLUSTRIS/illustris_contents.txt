@@ -1,0 +1,51 @@
+Group
+	GroupFirstSub		int		-
+	GroupLen		int		-
+	GroupLenType		int		-
+	GroupMass		float		10^10 Msun/h
+	GroupMassType		float		10^10 Msun/h
+	GroupNsubs		int		-
+	GroupPos		float		ckpc/h
+	GroupVel		float		km/s/a
+	Group_M_Crit200		float		10^10 Msun/h
+	Group_M_Crit500		float		10^10 Msun/h		
+	Group_M_Mean200		float		10^10 Msun/h
+	Group_M_TopHat200	float		10^10 Msun/h
+	Group_R_Crit200		float		ckpc/h
+	Group_R_Crit500		float		ckpc/h
+	Group_R_Mean200		float		^^
+	Group_R_TopHat200	float		^^
+Header:
+Offsets:
+	Group_SnapByType
+	Subhalo_LHaloTreeFile
+	Subhalo_LHaloTreeIndex
+	Subhalo_LHaloTreeNum
+	Subhalo_SnapByType
+	Subhalo_SublinkLastProgenitorID
+	Subhalo_SublinkRowNum
+	Subhalo_SublinkSubhaloID
+Subhalo:
+	SubhaloCM		float	ckpc/h
+	SubhaloGrNr		int	-
+	SubhaloHalfmassRad	float 	ckpc/h
+	SubhaloHalfmassRadType	float	ckpc/h
+	SubhaloIDMostbound	int(64)	-
+	SubhaloLen		int	-
+	SubhaloLenType		int	-
+	SubhaloMass		float	10^10 Msun/h
+	SubhaloMassInHalfRad	float	^^
+	SubhaloMassInHalfRadType^^	^^
+	SubhaloMassInMaxRad	^^	^^
+	SubhaloMassInMaxRadType	^^	^^
+	SubhaloMassInRad	^^	^^
+	SubhaloMassInRadType	^^	^^
+	SubhaloMassType		^^	^^
+	SubhaloParent		int	-
+	SubhaloPos		float 	ckpc/h
+	SubhaloSpin		float	(kpc/h)(km/s)
+	SubhaloVel		float	km/s
+	SubhaloVelDisp		float	km/s
+	SubhaloVmax		float	km/s
+	SubhaloVmaxRad		float	kpc/h
+

@@ -1,0 +1,15 @@
+import sqlite3
+conn = sqlite3.connect('halos_and_subhalos.db')
+c = conn.cursor()
+
+c.execute("DROP TABLE Subhalos")
+c.execute("DROP TABLE SubhaloCM")
+c.execute("DROP TABLE SubhaloHalfmassRadType")
+c.execute("DROP TABLE SubhaloLenType")
+c.execute("DROP TABLE SubhaloMassInHalfRadType")
+c.execute("DROP TABLE SubhaloMassInMaxRadType")
+c.execute("DROP TABLE SubhaloMassInRadType")
+c.execute("DROP TABLE SubhaloMassType")
+c.execute("DROP TABLE SubhaloPos")
+c.execute("DROP TABLE SubhaloSpin")
+c.execute("DROP TABLE SubhaloVel")

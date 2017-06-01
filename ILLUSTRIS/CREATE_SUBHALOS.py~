@@ -1,0 +1,93 @@
+#--------------------------------IMPORTS-------------------------------#
+import numpy as np
+import illustris_python as il
+np.seterr(divide = 'ignore', invalid = 'ignore')
+import sqlite3
+import sys
+#--------------------------CONSTANTS-----------------------------------#
+# Multiply the mass in Illustris catalog with this to get mass in Msun
+mass_constant = 0.704/1.e10
+
+# Given halo mass in Msun, returns stellar mass in Msun
+def StellarMass(M):
+	N10 = 		0.0351+0.0058		# N10 + sigmaN10
+	gamma10 = 	0.608+0.059		# gamma10 + sigma(gamma10)
+	beta10 = 	1.376+0.153		# beta10 + sigma(beta10)
+	M10 = 		10**(11.590+0.236)	# 10^(M10 + sigmaM10) 
+	return (2*M*N10*(((M/M10)**(-beta10))+((M/M10)**gamma10))**(-1))
+
+#------------------SETTING UP THE DATABASE CONNECTION------------------#
+
+conn = sqlite3.connect('halos_and_subhalos.db')
+c = conn.cursor()
+
+#------------------------------READING THE CATALOG--------------------#
+
+# Setup the HDF5 file
+basePath = './Illustris-1/'
+snapNum = 135
+
+print "Reading catalog..."
+
+CATALOG 	= il.groupcat.load(basePath, snapNum)
+SUBHALOS 	= CATALOG['subhalos']
+#------------------------------SUBHALOS-------------------------------#
+
+c.execute("CREATE TABLE Subhalos (SubhaloID int,SubhaloGrNr int,SubhaloHalfmassRad float,SubhaloIDMostbound int,SubhaloLen int,SubhaloMass float, SubhaloMassInHalfRad float,SubhaloMassInMaxRad float,SubhaloMassInRad float, SubhaloParent int, SubhaloVelDisp float, SubhaloVmax float, SubhaloVmaxRad float)")
+c.execute("CREATE TABLE SubhaloCM (SubhaloID int, X float, Y float, Z float)")
+c.execute("CREATE TABLE SubhaloHalfmassRadType (SubhaloID int, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float)")
+c.execute("CREATE TABLE SubhaloLenType (SubhaloID int, Type1 int, Type2 int, Type3 int, Type4 int, Type5 int, Type6 int)")
+c.execute("CREATE TABLE SubhaloMassInHalfRadType (SubhaloID int, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float)")
+c.execute("CREATE TABLE SubhaloMassInMaxRadType (SubhaloID int, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float)")
+c.execute("CREATE TABLE SubhaloMassInRadType (SubhaloID int, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float)")
+c.execute("CREATE TABLE SubhaloMassType (SubhaloID int, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float)")
+c.execute("CREATE TABLE SubhaloPos (SubhaloID int, X float, Y float, Z float)")
+c.execute("CREATE TABLE SubhaloSpin (SubhaloID int, X float, Y float, Z float)")
+c.execute("CREATE TABLE SubhaloVel (SubhaloID int, X float, Y float, Z float)")
+
+fraction = 100000
+barwidth = (SUBHALOS['count']/fraction)+1
+sys.stdout.write("Creating subhalos...[%s]"%(" " * barwidth))
+sys.stdout.flush()
+sys.stdout.write("\b" * (barwidth+1))
+for i in range(0, SUBHALOS['count']):
+	SubhaloID = i
+	if i % fraction == 0:
+		sys.stdout.write("#")
+		sys.stdout.flush()
+	SubhaloParams = (SubhaloID, int(SUBHALOS['SubhaloGrNr'][i]), float(SUBHALOS['SubhaloHalfmassRad'][i]), int(SUBHALOS['SubhaloIDMostbound'][i]), int(SUBHALOS['SubhaloLen'][i]), float(SUBHALOS['SubhaloMass'][i]*mass_constant), float(SUBHALOS['SubhaloMassInHalfRad'][i]*mass_constant), float(SUBHALOS['SubhaloMassInMaxRad'][i]*mass_constant), float(SUBHALOS['SubhaloMassInRad'][i]*mass_constant), float(SUBHALOS['SubhaloParent'][i]), float(SUBHALOS['SubhaloVelDisp'][i]), float(SUBHALOS['SubhaloVmax'][i]), float(SUBHALOS['SubhaloVmaxRad'][i]))
+	c.execute("INSERT INTO Subhalos VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", SubhaloParams)
+
+	SubhaloCMParams = (SubhaloID, float(SUBHALOS['SubhaloCM'][i][0]),float(SUBHALOS['SubhaloCM'][i][1]),float(SUBHALOS['SubhaloCM'][i][2]))
+	c.execute("INSERT INTO SubhaloCM VALUES(?, ?, ?, ?)", SubhaloCMParams)
+	
+	SubhaloHalfmassRadTypeParams = (SubhaloID, float(SUBHALOS['SubhaloHalfmassRadType'][i][0]), float(SUBHALOS['SubhaloHalfmassRadType'][i][1]), float(SUBHALOS['SubhaloHalfmassRadType'][i][2]), float(SUBHALOS['SubhaloHalfmassRadType'][i][3]), float(SUBHALOS['SubhaloHalfmassRadType'][i][4]), float(SUBHALOS['SubhaloHalfmassRadType'][i][5]))
+	c.execute("INSERT INTO SubhaloHalfmassRadType VALUES (?, ?, ?, ?, ?, ?, ?)", SubhaloHalfmassRadTypeParams)
+	
+	SubhaloLenTypeParams = (SubhaloID, int(SUBHALOS['SubhaloLenType'][i][0]), int(SUBHALOS['SubhaloLenType'][i][1]), int(SUBHALOS['SubhaloLenType'][i][2]), int(SUBHALOS['SubhaloLenType'][i][3]), int(SUBHALOS['SubhaloLenType'][i][4]), int(SUBHALOS['SubhaloLenType'][i][5]))
+	c.execute("INSERT INTO SubhaloLenType VALUES (?, ?, ?, ?, ?, ?, ?)", SubhaloLenTypeParams)
+
+	SubhaloMassInHalfRadTypeParams = (SubhaloID, float(SUBHALOS['SubhaloMassInHalfRadType'][i][0]*mass_constant), float(SUBHALOS['SubhaloMassInHalfRadType'][i][1]*mass_constant), float(SUBHALOS['SubhaloMassInHalfRadType'][i][2]*mass_constant), float(SUBHALOS['SubhaloMassInHalfRadType'][i][3]*mass_constant), float(SUBHALOS['SubhaloMassInHalfRadType'][i][4]*mass_constant), float(SUBHALOS['SubhaloMassInHalfRadType'][i][5]*mass_constant))
+	c.execute("INSERT INTO SubhaloMassInHalfRadType VALUES (?, ?, ?, ?, ?, ?, ?)", SubhaloMassInHalfRadTypeParams)
+
+	SubhaloMassInMaxRadTypeParams = (SubhaloID, float(SUBHALOS['SubhaloMassInMaxRadType'][i][0]*mass_constant), float(SUBHALOS['SubhaloMassInMaxRadType'][i][1]*mass_constant), float(SUBHALOS['SubhaloMassInMaxRadType'][i][2]*mass_constant), float(SUBHALOS['SubhaloMassInMaxRadType'][i][3]*mass_constant), float(SUBHALOS['SubhaloMassInMaxRadType'][i][4]*mass_constant), float(SUBHALOS['SubhaloMassInMaxRadType'][i][5]*mass_constant))
+	c.execute("INSERT INTO SubhaloMassInMaxRadType VALUES (?, ?, ?, ?, ?, ?, ?)", SubhaloMassInMaxRadTypeParams)
+
+	SubhaloMassInRadTypeParams = (SubhaloID, float(SUBHALOS['SubhaloMassInRadType'][i][0]*mass_constant), float(SUBHALOS['SubhaloMassInRadType'][i][1]*mass_constant), float(SUBHALOS['SubhaloMassInRadType'][i][2]*mass_constant), float(SUBHALOS['SubhaloMassInRadType'][i][3]*mass_constant), float(SUBHALOS['SubhaloMassInRadType'][i][4]*mass_constant), float(SUBHALOS['SubhaloMassInRadType'][i][5]*mass_constant))
+	c.execute("INSERT INTO SubhaloMassInRadType VALUES (?, ?, ?, ?, ?, ?, ?)", SubhaloMassInRadTypeParams)
+
+	SubhaloMassTypeParams = (SubhaloID, float(SUBHALOS['SubhaloMassType'][i][0]*mass_constant), float(SUBHALOS['SubhaloMassType'][i][1]*mass_constant), float(SUBHALOS['SubhaloMassType'][i][2]*mass_constant), float(SUBHALOS['SubhaloMassType'][i][3]*mass_constant), float(SUBHALOS['SubhaloMassType'][i][4]*mass_constant), float(SUBHALOS['SubhaloMassType'][i][5]*mass_constant))
+	c.execute("INSERT INTO SubhaloMassType VALUES (?, ?, ?, ?, ?, ?, ?)", SubhaloMassTypeParams)
+
+	SubhaloPosParams = (SubhaloID, float(SUBHALOS['SubhaloPos'][i][0]), float(SUBHALOS['SubhaloPos'][i][1]), float(SUBHALOS['SubhaloPos'][i][2]))
+	c.execute("INSERT INTO SubhaloPos VALUES (?, ?, ?, ?)", SubhaloPosParams)
+
+	SubhaloSpinParams = (SubhaloID, float(SUBHALOS['SubhaloSpin'][i][0]), float(SUBHALOS['SubhaloSpin'][i][1]), float(SUBHALOS['SubhaloSpin'][i][2]))
+	c.execute("INSERT INTO SubhaloSpin VALUES (?, ?, ?, ?)", SubhaloSpinParams)
+
+	SubhaloVelParams = (SubhaloID, float(SUBHALOS['SubhaloVel'][i][0]), float(SUBHALOS['SubhaloVel'][i][1]), float(SUBHALOS['SubhaloVel'][i][2]))
+	c.execute("INSERT INTO SubhaloVel VALUES (?, ?, ?, ?)", SubhaloVelParams)
+print "\n"
+
+conn.commit()
+conn.close()
