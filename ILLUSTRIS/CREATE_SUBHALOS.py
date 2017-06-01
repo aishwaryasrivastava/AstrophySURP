@@ -33,17 +33,17 @@ CATALOG 	= il.groupcat.load(basePath, snapNum)
 SUBHALOS 	= CATALOG['subhalos']
 #------------------------------SUBHALOS-------------------------------#
 
-c.execute("CREATE TABLE Subhalos (SubhaloID int,SubhaloGrNr int,SubhaloHalfmassRad float,SubhaloIDMostbound int,SubhaloLen int,SubhaloMass float, SubhaloMassInHalfRad float,SubhaloMassInMaxRad float,SubhaloMassInRad float, SubhaloParent int, SubhaloVelDisp float, SubhaloVmax float, SubhaloVmaxRad float)")
-c.execute("CREATE TABLE SubhaloCM (SubhaloID int, X float, Y float, Z float)")
-c.execute("CREATE TABLE SubhaloHalfmassRadType (SubhaloID int, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float)")
-c.execute("CREATE TABLE SubhaloLenType (SubhaloID int, Type1 int, Type2 int, Type3 int, Type4 int, Type5 int, Type6 int)")
-c.execute("CREATE TABLE SubhaloMassInHalfRadType (SubhaloID int, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float)")
-c.execute("CREATE TABLE SubhaloMassInMaxRadType (SubhaloID int, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float)")
-c.execute("CREATE TABLE SubhaloMassInRadType (SubhaloID int, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float)")
-c.execute("CREATE TABLE SubhaloMassType (SubhaloID int, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float)")
-c.execute("CREATE TABLE SubhaloPos (SubhaloID int, X float, Y float, Z float)")
-c.execute("CREATE TABLE SubhaloSpin (SubhaloID int, X float, Y float, Z float)")
-c.execute("CREATE TABLE SubhaloVel (SubhaloID int, X float, Y float, Z float)")
+c.execute("CREATE TABLE Subhalos (SubhaloID int PRIMARY KEY,SubhaloGrNr int,SubhaloHalfmassRad float,SubhaloIDMostbound int,SubhaloLen int,SubhaloMass float, SubhaloMassInHalfRad float,SubhaloMassInMaxRad float,SubhaloMassInRad float, SubhaloParent int, SubhaloVelDisp float, SubhaloVmax float, SubhaloVmaxRad float)")
+c.execute("CREATE TABLE SubhaloCM (SubhaloID int, X float, Y float, Z float, FOREIGN KEY(SubhaloID) REFERENCES Subhalos(SubhaloID))")
+c.execute("CREATE TABLE SubhaloHalfmassRadType (SubhaloID int PRIMARY KEY, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float, FOREIGN KEY(SubhaloID) REFERENCES Subhalos(SubhaloID))")
+c.execute("CREATE TABLE SubhaloLenType (SubhaloID int PRIMARY KEY, Type1 int, Type2 int, Type3 int, Type4 int, Type5 int, Type6 int, FOREIGN KEY(SubhaloID) REFERENCES Subhalos(SubhaloID))")
+c.execute("CREATE TABLE SubhaloMassInHalfRadType (SubhaloID int PRIMARY KEY, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float, FOREIGN KEY(SubhaloID) REFERENCES Subhalos(SubhaloID))")
+c.execute("CREATE TABLE SubhaloMassInMaxRadType (SubhaloID int PRIMARY KEY, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float, FOREIGN KEY(SubhaloID) REFERENCES Subhalos(SubhaloID))")
+c.execute("CREATE TABLE SubhaloMassInRadType (SubhaloID int PRIMARY KEY, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float, FOREIGN KEY(SubhaloID) REFERENCES Subhalos(SubhaloID))")
+c.execute("CREATE TABLE SubhaloMassType (SubhaloID int PRIMARY KEY, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float, FOREIGN KEY(SubhaloID) REFERENCES Subhalos(SubhaloID))")
+c.execute("CREATE TABLE SubhaloPos (SubhaloID int PRIMARY KEY, X float, Y float, Z float, FOREIGN KEY(SubhaloID) REFERENCES Subhalos(SubhaloID))")
+c.execute("CREATE TABLE SubhaloSpin (SubhaloID int PRIMARY KEY, X float, Y float, Z float, FOREIGN KEY(SubhaloID) REFERENCES Subhalos(SubhaloID))")
+c.execute("CREATE TABLE SubhaloVel (SubhaloID int PRIMARY KEY, X float, Y float, Z float, FOREIGN KEY(SubhaloID) REFERENCES Subhalos(SubhaloID))")
 
 fraction = 100000
 barwidth = (SUBHALOS['count']/fraction)+1

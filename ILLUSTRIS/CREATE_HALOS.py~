@@ -6,7 +6,7 @@ import sqlite3
 import sys
 #--------------------------CONSTANTS-----------------------------------#
 # Multiply the mass in Illustris catalog with this to get mass in Msun
-mass_constant = 0.704/1.e10
+mass_constant = 1.e10/0.704
 
 # Given halo mass in Msun, returns stellar mass in Msun
 def StellarMass(M):
@@ -33,11 +33,11 @@ CATALOG 	= il.groupcat.load(basePath, snapNum)
 HALOS		= CATALOG['halos']
 #------------------------------CREATING HALOS----------------------------#
 
-c.execute("CREATE TABLE Groups (GroupId int, GroupFirstSub int, GroupLen int, GroupMass float, GroupNsubs int, Group_M_Crit200 float, Group_M_Crit500 float, Group_M_Mean200 float, Group_M_TopHat200 float, Group_R_Crit200float, Group_R_Crit500 float, Group_R_Mean200 float, Group_R_TopHat200 float, StellarMass float)")
-c.execute("CREATE TABLE GroupLenType(GroupID int, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float)")
-c.execute("CREATE TABLE GroupMassType(GroupID int, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float)")
-c.execute("CREATE TABLE GroupPos(GroupID int, X float, Y float, Z float)")
-c.execute("CREATE TABLE GroupVel(GroupID int, X float, Y float, Z float)")
+c.execute("CREATE TABLE Groups (GroupId int PRIMARY KEY, GroupFirstSub int, GroupLen int, GroupMass float, GroupNsubs int, Group_M_Crit200 float, Group_M_Crit500 float, Group_M_Mean200 float, Group_M_TopHat200 float, Group_R_Crit200float, Group_R_Crit500 float, Group_R_Mean200 float, Group_R_TopHat200 float, StellarMass float)")
+c.execute("CREATE TABLE GroupLenType(GroupID int PRIMARY KEY, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float, FOREIGN KEY(GroupID) REFERENCES Groups(GroupID))")
+c.execute("CREATE TABLE GroupMassType(GroupID int PRIMARY KEY, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float, FOREIGN KEY(GroupID) REFERENCES Groups(GroupID))")
+c.execute("CREATE TABLE GroupPos(GroupID int PRIMARY KEY, X float, Y float, Z float, FOREIGN KEY(GroupID) REFERENCES Groups(GroupID))")
+c.execute("CREATE TABLE GroupVel(GroupID int PRIMARY KEY, X float, Y float, Z float, FOREIGN KEY(GroupID) REFERENCES Groups(GroupID))")
 
 fraction = 100000
 barwidth = (HALOS['count']/fraction)+1

@@ -14,3 +14,5 @@ for i in range(1, 4):
 	print "Finding range {index}...".format(index = i)
 	c.execute("CREATE TABLE Range{index} (GroupID int)".format(index = i))
 	c.execute("INSERT INTO Range{index} SELECT GroupID FROM Groups WHERE StellarMass > {minmass} AND StellarMass < {maxmass}".format(index = i, minmass = mstarmin[i-1], maxmass = mstarmax[i-1]))
+conn.commit()
+conn.close()

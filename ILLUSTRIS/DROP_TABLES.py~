@@ -8,7 +8,7 @@ c.execute("DROP TABLE GroupLenType")
 c.execute("DROP TABLE GroupMassType")
 c.execute("DROP TABLE GroupPos")
 c.execute("DROP TABLE GroupVel")
-
+"""
 # DROP SUBHALO TABLES
 c.execute("DROP TABLE Subhalos")
 c.execute("DROP TABLE SubhaloCM")
@@ -27,5 +27,5 @@ c.execute("DROP TABLE Range1")
 c.execute("DROP TABLE Range2")
 c.execute("DROP TABLE Range3")
 
-
+"""
 
