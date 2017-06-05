@@ -1,3 +1,4 @@
+
 import sqlite3
 import os
 import sys
@@ -18,42 +19,39 @@ c = conn.cursor()
 n_bins = 20
 
 for i in range(1,4):
-	c.execute("SELECT GroupID FROM Range{index}".format(index = i))
-	rows = c.fetchall()
-	IDs = []
-	for row in rows:
-		IDs.append(row[0])
+	c.execute("SELECT Groups.GroupID, Groups.GroupNsubs, Groups.GroupFirstSub FROM Range{index} INNER JOIN Groups WHERE Range{index}.GroupID = Groups.GroupID".format(index = i))
+	halos = c.fetchall()
+	# halos[i][0] = i-th halo GroupID
+	# halos[i][1] = i-th halo GroupNSubs
+	# halos[i][2] = i-th halo GroupFirstSub
 
 	# Finding random hosts
 	random_hosts = []
 	for j in range(0,2):
-		host = random.choice(IDs)
-		while host in random_hosts:
-			host = random.choice(IDs)
-		random_hosts.append(host)
-	velocities = []
-	for hostID in random_hosts:
-		satellite_velocities = []
-		satelliteIDs = []
-		c.execute("SELECT SubhaloID from Satellites WHERE GroupID = ?", (hostID,))
-		rows = c.fetchall()
-		for row in rows:
-			satelliteIDs.append(row[0])
-		for satellite in satelliteIDs:
-			c.execute("SELECT X FROM SubhaloVel WHERE SubhaloID = ?", (satellite,))
-			Vx = c.fetchall()[0][0]
-			satellite_velocities.append(Vx)
-		velocities.append(satellite_velocities)
-		print len(satellite_velocities)
+		ind = random.choice(len(halos))
+		while halos[ind] in random_hosts:
+			ind = random.choice(len(halos))
+		random_hosts.append(halos[ind])
+
+	satellite_velocities = []
+	for host in random_hosts:
+		satellites = range(host[2], host[2]+host[1])
+		velocities = []
+		# satellites = list of indices in the Subhalo table
+		for satID in satellites:
+			c.execute("SELECT X FROM SubhaloVel WHERE SubhaloID = ?",(satID,))
+			VelX = c.fetchall()[0][0]
+			velocities.append(VelX)
+		satellite_velocities.append(velocities)
 		
-	# velocities now is a list containing the satellite velocities of each host {[host1sat1velocity, host1sat2velocity...][host2sat1velocity, host2sat2velocity...]}
+	# satellite_velocities is a list containing the satellite velocities of each host {[host1sat1velocity, host1sat2velocity...][host2sat1velocity, host2sat2velocity...]}
 
 	fig, ax = plt.subplots()
 	labels = []
 	for j in range(0,2):
-		labels.append("#{HostID}: $\mu =$ {mean}; $\sigma =$ {sigma}".format(HostID = random_hosts[j], mean = '%.3f'%mean(velocities[j]), sigma = '%.3f'%std(velocities[j])))
+		labels.append("#{HostID}: $\mu =$ {mean}; $\sigma =$ {sigma}".format(HostID = random_hosts[j][0], mean = '%.3f'%mean(satellite_velocities[j]), sigma = '%.3f'%std(satellite_velocities[j])))
 	
-	n, bins, patches = ax.hist(velocities, n_bins, normed = 1, histtype = 'bar', label = labels)
+	n, bins, patches = ax.hist(satellite_velocities, n_bins, normed = 1, histtype = 'bar', label = labels)
 	#y = mlab.normpdf(bins, mu, sigma)
 	#ax.plot(bins, y, '--')
 	ax.set_xlabel('Vx (km/s) of satellites')

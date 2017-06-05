@@ -33,7 +33,7 @@ CATALOG 	= il.groupcat.load(basePath, snapNum)
 SUBHALOS 	= CATALOG['subhalos']
 #------------------------------SUBHALOS-------------------------------#
 
-c.execute("CREATE TABLE Subhalos (SubhaloID int PRIMARY KEY,SubhaloGrNr int,SubhaloHalfmassRad float,SubhaloIDMostbound int,SubhaloLen int,SubhaloMass float, SubhaloMassInHalfRad float,SubhaloMassInMaxRad float,SubhaloMassInRad float, SubhaloParent int, SubhaloVelDisp float, SubhaloVmax float, SubhaloVmaxRad float)")
+c.execute("CREATE TABLE Subhalos (SubhaloID int PRIMARY KEY,SubhaloGrNr int,SubhaloHalfmassRad float,SubhaloIDMostbound int,SubhaloLen int,SubhaloMass float, SubhaloMassInHalfRad float,SubhaloMassInMaxRad float,SubhaloMassInRad float, SubhaloParent int, SubhaloVelDisp float, SubhaloVmax float, SubhaloVmaxRad float, StellarMass float)")
 c.execute("CREATE TABLE SubhaloCM (SubhaloID int, X float, Y float, Z float, FOREIGN KEY(SubhaloID) REFERENCES Subhalos(SubhaloID))")
 c.execute("CREATE TABLE SubhaloHalfmassRadType (SubhaloID int PRIMARY KEY, Type1 float, Type2 float, Type3 float, Type4 float, Type5 float, Type6 float, FOREIGN KEY(SubhaloID) REFERENCES Subhalos(SubhaloID))")
 c.execute("CREATE TABLE SubhaloLenType (SubhaloID int PRIMARY KEY, Type1 int, Type2 int, Type3 int, Type4 int, Type5 int, Type6 int, FOREIGN KEY(SubhaloID) REFERENCES Subhalos(SubhaloID))")
@@ -55,8 +55,8 @@ for i in range(0, SUBHALOS['count']):
 	if i % fraction == 0:
 		sys.stdout.write("#")
 		sys.stdout.flush()
-	SubhaloParams = (SubhaloID, int(SUBHALOS['SubhaloGrNr'][i]), float(SUBHALOS['SubhaloHalfmassRad'][i]), int(SUBHALOS['SubhaloIDMostbound'][i]), int(SUBHALOS['SubhaloLen'][i]), float(SUBHALOS['SubhaloMass'][i]*mass_constant), float(SUBHALOS['SubhaloMassInHalfRad'][i]*mass_constant), float(SUBHALOS['SubhaloMassInMaxRad'][i]*mass_constant), float(SUBHALOS['SubhaloMassInRad'][i]*mass_constant), float(SUBHALOS['SubhaloParent'][i]), float(SUBHALOS['SubhaloVelDisp'][i]), float(SUBHALOS['SubhaloVmax'][i]), float(SUBHALOS['SubhaloVmaxRad'][i]))
-	c.execute("INSERT INTO Subhalos VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", SubhaloParams)
+	SubhaloParams = (SubhaloID, int(SUBHALOS['SubhaloGrNr'][i]), float(SUBHALOS['SubhaloHalfmassRad'][i]), int(SUBHALOS['SubhaloIDMostbound'][i]), int(SUBHALOS['SubhaloLen'][i]), float(SUBHALOS['SubhaloMass'][i]*mass_constant), float(SUBHALOS['SubhaloMassInHalfRad'][i]*mass_constant), float(SUBHALOS['SubhaloMassInMaxRad'][i]*mass_constant), float(SUBHALOS['SubhaloMassInRad'][i]*mass_constant), float(SUBHALOS['SubhaloParent'][i]), float(SUBHALOS['SubhaloVelDisp'][i]), float(SUBHALOS['SubhaloVmax'][i]), float(SUBHALOS['SubhaloVmaxRad'][i]), StellarMass(float(SUBHALOS['SubhaloMass'][i])*mass_constant))
+	c.execute("INSERT INTO Subhalos VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", SubhaloParams)
 
 	SubhaloCMParams = (SubhaloID, float(SUBHALOS['SubhaloCM'][i][0]),float(SUBHALOS['SubhaloCM'][i][1]),float(SUBHALOS['SubhaloCM'][i][2]))
 	c.execute("INSERT INTO SubhaloCM VALUES(?, ?, ?, ?)", SubhaloCMParams)
