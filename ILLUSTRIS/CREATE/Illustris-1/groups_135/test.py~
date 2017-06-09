@@ -1,0 +1,6 @@
+import illustris_python as il
+basePath = './Illustris-1/'
+fields = ['SubhaloMass', 'SubhaloSFRinRad']
+subhalos = il.groupcat.loadSubhalos(basePath, 135, fields = fields)
+print subhalos.keys()
+print subhalos['SubhaloMass'].shape
