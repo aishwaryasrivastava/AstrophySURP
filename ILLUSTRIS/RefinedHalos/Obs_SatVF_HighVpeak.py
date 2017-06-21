@@ -20,7 +20,7 @@ c = conn.cursor()
 # Gravitational constant
 G = 6.67e-11 * (1.e-3)**2. * (2.e30)/(3.086e19) 
 
-n_bins_def = 100
+n_bins_def = 200
 host_count_def = 50
 Vpeak = 12
 
@@ -99,12 +99,11 @@ fig, ax = plt.subplots()
 n, bins, patches = ax.hist(velocities, n_bins, normed = 1, histtype = 'stepfilled', stacked = True)
 ax.set_xlabel('Vx (km/s) of satellites')
 ax.set_ylabel('Probability')
-plt.ylim([0,0.02])
 plt.xlim([-200,200])
 ax.set_title('Velocity function of observational satellites of refined halos\nSample size = {size}; bin size = {bin}; '.format(size = host_count, bin = n_bins)+"$\mu =$ {mean}; $\sigma =$ {std}".format(mean = '%.3f'% mean(velocities), std = '%.3f'% std(velocities)))
 plt.grid(True)
 fig.set_size_inches(10,10)	
-plt.savefig("Obs_SatVF_HighVpeak.png")
+plt.savefig("plots/Obs_SatVF_HighVpeak.png")
 plt.close()
 conn.commit()
 conn.close()

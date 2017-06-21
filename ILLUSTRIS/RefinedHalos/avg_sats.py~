@@ -13,6 +13,25 @@ import matplotlib.mlab as mlab
 import numpy as np
 np.seterr(divide = 'ignore', invalid = 'ignore')
 
+h = 0.704
+# Returns the distance between P1 and P2 (in kpc)
+def Distance_3D(P1, P2):
+	x1 = P1[0]
+	x2 = P2[0]
+	y1 = P1[1]
+	y2 = P2[1]
+	z1 = P1[2]
+	z2 = P2[2]
+	return (((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)**0.5)/h
+
+
+def Distance_2D(P1, P2):
+	y1 = P1[1]
+	y2 = P2[1]
+	z1 = P1[2]
+	z2 = P2[2]
+	return (((y1-y2)**2 + (z1-z2)**2)**0.5)/h
+
 # Connecting to the database
 conn = sqlite3.connect('../ILLUSTRIS.db')
 c = conn.cursor()
@@ -37,11 +56,11 @@ if len(host_count) == 0:
 else:
 	host_count = int(host_count)
 
-# List of velocities
-velocities = []
+# List of distances
+distances = []
 
 # Acquiring the subhalos
-c.execute("SELECT Subhalos.SubhaloID, SubhaloPos.Y, SubhaloPos.Z, SubhaloVel.X, Subhalos.StellarMass FROM Subhalos INNER JOIN SubhaloPos ON SubhaloPos.SubhaloID = Subhalos.SubhaloID INNER JOIN SubhaloVel ON SubhaloVel.SubhaloID = Subhalos.SubhaloID WHERE Subhalos.StellarMass < 3.e9")
+c.execute("SELECT Subhalos.SubhaloID, SubhaloPos.X, SubhaloPos.Y, SubhaloPos.Z, SubhaloVel.X, Subhalos.StellarMass FROM Subhalos INNER JOIN SubhaloPos ON SubhaloPos.SubhaloID = Subhalos.SubhaloID INNER JOIN SubhaloVel ON SubhaloVel.SubhaloID = Subhalos.SubhaloID")
 Satellites = c.fetchall()
 
 # Acquiring halos
@@ -54,7 +73,8 @@ fraction = host_count/(barwidth-1)
 sys.stdout.write("Creating velocity function:\t[%s]"%(" "*barwidth))
 sys.stdout.flush()
 sys.stdout.write("\b"*(barwidth+1))
-
+Sat_count_full = 0
+Sat_count_half = 0
 # Selecting random hosts
 RandomHosts = []
 for j in range(0,host_count):
@@ -69,9 +89,7 @@ for j in range(0,host_count):
 	RandomHosts.append(Halos[ind])
 
 	GroupID = Halo[0]
-	GroupPosX = Halo[1]
-	GroupPosY = Halo[2]
-	GroupPosZ = Halo[3]
+	GroupPos = (Halo[1], Halo[2], Halo[3])
 	GroupMass = Halo[4]
 	GroupRvir = Halo[5]
 	GroupVelX = Halo[6]
@@ -82,28 +100,33 @@ for j in range(0,host_count):
 		
 		Sat = Satellites[k]
 		SatID = Sat[0]
-		SatPosY = Sat[1]
-		SatPosZ = Sat[2]
-		SatVelX = Sat[3]
-		SatMass = Sat[4]
+		SatPos = (Sat[1], Sat[2], Sat[3])
+		SatVelX = Sat[4]
+		SatMass = Sat[5]
 
-		Dist = (((SatPosY - GroupPosY)**2)+((SatPosZ - GroupPosZ)**2))**(0.5)
+		Dist2D = Distance_2D(GroupPos, SatPos)
+		Dist3D = Distance_3D(GroupPos, SatPos)
 		Vvir = ((G * GroupMvir/GroupRvir)*(3e8/1e10))**(0.5)
 
-		if (Dist < GroupRvir) and (SatMass < GroupMass) and (numpy.absolute(SatVelX - GroupVelX) < Vvir):
-			velocities.append(SatVelX)	
+		if (Dist2D < GroupRvir/h) and (SatMass < GroupMass) and (numpy.absolute(SatVelX - GroupVelX) < Vvir):
+			#distances.append(Dist3D)
+			Sat_count_full +=1
+
+		if (Dist2D < GroupRvir/2*h) and (SatMass < GroupMass) and (numpy.absolute(SatVelX - GroupVelX) < Vvir):
+			#distances.append(Dist3D)
+			Sat_count_half +=1
+print "Full radius: " + `Sat_count_full/host_count`
+print "Hald radius: " + `Sat_count_half/host_count`
+"""	
 print "\n"
 # Create the plot
 fig, ax = plt.subplots()
-n, bins, patches = ax.hist(velocities, n_bins, normed = 1, histtype = 'stepfilled', stacked = True)
-ax.set_xlabel('Vx (km/s) of satellites')
+n, bins, patches = ax.hist(distances, n_bins, normed = 1, histtype = 'stepfilled', stacked = True)
+ax.set_xlabel('Distance (kpc)')
 ax.set_ylabel('Probability')
-plt.xlim([-200,200])
-ax.set_title('Velocity function of observational satellites of refined halos\nSample size = {size}; bin size = {bin}; '.format(size = host_count, bin = n_bins)+"$\mu =$ {mean}; $\sigma =$ {std}".format(mean = '%.3f'% mean(velocities), std = '%.3f'% std(velocities)))
+ax.set_title('Separation between refined halos and their observed satellites\nSample size = {size}; bin size = {bin}; '.format(size = host_count, bin = n_bins)+"$\mu =$ {mean}; $\sigma =$ {std}".format(mean = '%.3f'% mean(distances), std = '%.3f'% std(distances)))
 plt.grid(True)
 fig.set_size_inches(10,10)	
-plt.savefig("plots/Obs_SatVF.png")
+plt.savefig("Obs_Separation.png")
 plt.close()
-conn.commit()
-conn.close()
-
+"""

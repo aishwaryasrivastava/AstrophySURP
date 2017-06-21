@@ -48,7 +48,7 @@ fraction = host_count/(barwidth-1)
 sys.stdout.write("Creating velocity function:\t[%s]"%(" "*barwidth))
 sys.stdout.flush()
 sys.stdout.write("\b"*(barwidth+1))
-
+sat_count = 0
 # Selecting random hosts
 RandomHosts = []
 for j in range(0,host_count):
@@ -67,13 +67,14 @@ for j in range(0,host_count):
 	GroupFirstSub = Halo[2]
 	GroupVelX = Halo[3]
 	Satellites = range(GroupFirstSub, GroupFirstSub+GroupNSubs)
+	sat_count += len(Satellites)
 	for SatID in Satellites:
 		# Adding relative satellite velocity to the 2D array
 		c.execute("SELECT SubhaloVel.X, Subhalos.StellarMass FROM Subhalos INNER JOIN SubhaloVel ON Subhalos.SubhaloID = SubhaloVel.SubhaloID WHERE Subhalos.SubhaloID = ?",(SatID,))
 		result = c.fetchall()		
 		SatVelX = result[0][0]
 		# TO-DO: Add a mass cut for satellites
-		velocities.append(SatVelX - GroupVelX)
+		#velocities.append(SatVelX - GroupVelX)
 
 print "\n"
 # Create the plot
@@ -87,7 +88,8 @@ plt.grid(True)
 fig.set_size_inches(10,10)	
 plt.savefig("SubFind_SatVF.png")
 plt.close()
-
+print "Avg: " + `sat_count/host_count`
+print "Full: " + `sat_count`
 # Close the connection
 conn.commit()
 conn.close()
