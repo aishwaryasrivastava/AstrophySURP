@@ -1,0 +1,259 @@
+#------------------------------------------IMPORTS---------------------------------------------------
+import sqlite3
+import os
+import sys
+import numpy
+import random
+from numpy import * 
+from numpy import linalg
+import scipy
+from scipy.optimize import brentq
+import pylab as pl
+
+import matplotlib.mlab as mlab
+import numpy as np
+np.seterr(divide = 'ignore', invalid = 'ignore')
+
+# Connecting to the database
+conn = sqlite3.connect('../ILLUSTRIS.db')
+c = conn.cursor()
+#-----------------------------------------CONSTANTS/DEFAULTS----------------------------------------
+# Hubble constant
+h = 0.704
+
+# Default no. of bins
+n_bins = 200
+
+# Default sample size
+host_count = 400
+
+# Cut function by Vpeak?
+Vpeak_cut = False
+
+# Use absolute relative Vx?
+AbsoluteVx = True
+
+# Satellite mass cut?
+SatMassCut = False
+
+# Host mass cut?
+HostMassCut = False
+
+# By projection?
+ProjectionCut = False
+
+# Stacked?
+Stacked = False
+
+# Vpeak in km/s
+Vpeak = 12
+
+# Mass cutoff
+sat_mass_cutoff = 1.e5
+
+# File to save the plot as
+filename = "SubFind"
+
+# SQL return fields
+# Common fields:
+ID = 0
+VELX = 1
+STELLARMASS = 2
+POSX = 3
+POSY = 4
+POSZ = 5
+
+# Group fields
+NSUBS = 6
+FIRSTSUB = 7
+RVIR = 8
+
+# Subhalo fields
+VMAX = 6
+
+
+#-----------------------------------------INPUTS------------------------------------------------
+
+# TO-DO: Check for input validity
+
+# Number of bins
+user_input = raw_input("\nEnter no. of bins (Press Enter for default = {Def}): ".format(Def = n_bins))
+if not len(user_input) == 0:
+	n_bins = int(user_input)
+
+# Sample size
+user_input = raw_input("\nEnter set size (Press Enter for default = {Def}): ".format(Def = host_count))
+if not len(user_input) == 0:
+	host_count = int(user_input)
+
+# Vpeak cut
+user_input = raw_input("\nVpeak cut? [Y/ (Default) N]: ")
+if user_input in ["y", "Y"]:
+	Vpeak_cut = True
+	user_input = raw_input("\nVpeak (km/s) (Press enter for default = 12 km/s): ")
+	if not len(user_input):
+		Vpeak = float(user_input)
+	filename += "_VpeakCut"
+
+# Use absolute Vx
+user_input = raw_input("\nUse absolute velocity? [(Default) Y/ N]: ")
+if user_input in ["N", "n"]:
+	AbsoluteVx = False
+elif user_input in ["Y", "y", ""]:
+	filename += "_AbsoluteVx"
+
+# Do a mass cut
+user_input = raw_input("\nMass cutoff? [Y/ (Default) N]: ")
+if user_input in ["y", "Y"]:
+	user_input = raw_input("\nMass cutoff (Msun) (Press enter for default = 1.e5 Msun): ")
+	if not len(user_input):
+		sat_mass_cutoff = float(user_input)
+	filename += "_MassCut"
+
+# By range
+user_input = raw_input("\nSeparate by stellar mass range? [Y/ (Default) N]: ")
+if user_input in ["Y", "y"]:
+	HostMassCut = True
+	# Stacked
+	user_input = raw_input("\nStack thhe ranges? [Y/ (Default) N]: ")
+	if user_input in ["Y", "y"]:
+		Stacked = True
+
+# By projection
+user_input = raw_input("\nProjection cut? [Y/ (Default) N]: ")
+if user_input in ["Y", "y"]:
+	ProjectionCut = True
+	filename += "ProjectionCut"
+
+#----------------------------------------FUNCTIONS--------------------------------------------------
+# Returns a list of {Count} random elements from {List}
+def RandomElements(List, Count):
+	# List of chosen elements
+	Chosen = []
+	for i in range(Count):
+		# Pick a random element from {List}
+		i = random.choice(len(List))
+		# If {i} is already chosen, pick another
+		while i in Chosen:
+			i = random.choice(len(List))
+		# Once a unique element {i} is chosen, add it to the list		
+		Chosen.append(i)
+	return Chosen
+
+# Returns a list of Satellites belonging to {Group} using the SubFind Algorithm
+def SatelliteList(Group):
+	return range(Group[FIRSTSUB], Group[FIRSTSUB] + Group[NSUBS])
+
+# Returns the 2D distance between the Group and Sub with IDs {GroupID}, {SatID}
+def Distance2D(GroupID, SatID):
+
+	y1 = Groups[GroupID][POSY]
+	z1 = Groups[GroupID][POSZ]
+
+	y2 = Satellites[SatID][POSY]
+	z2 = Satellites[SatID][POSZ]
+
+	return (((y1-y2)**2 + (z1-z2)**2)**0.5)/h
+	
+# Take care of whether Halos is ALL or by range later
+def GetVelocities(Halos):
+	GroupsID = RandomElements(Halos, host_count)
+	Velocities = []
+	if ProjectionCut or SatMassCut:
+		# if {ProjectionCut}, {Velocities[0]} are the satellites in 1/2 * Rvir
+		# if {SatMassCut}, {Velocities[0]} are satellites lighter than cutoff
+		Velocities = [[],[]]
+
+	for GroupID in GroupsID:
+		Group = Halos[GroupID]
+		Satellites = SatelliteList(Group)
+		for SatID in Satellites:
+			c.execute("SELECT Subhalos.SubhaloID SubhaloVel.X, Subhalos.StellarMass, SubhaloPos.X, SubhaloPos.Y, SubhaloPos.Z, Subhalos.SubhaloVmax FROM Subhalos INNER JOIN SubhaloVel ON Subhalos.SubhaloID = SubhaloVel.SubhaloID INNER JOIN SubhaloPos ON Subhalos.SubhaloID = SubhaloPos.SubhaloID WHERE Subhalos.SubhaloID = ?", (SatID,))
+			Sat = c.fetchall()[0]
+			v = Sat[VELX] - Group[VELX]
+			if AbsoluteVx:
+				v = abs(v)
+
+			if (Vpeak_cut and Sat[VMAX] > Vpeak) or (not Vpeak_cut):
+
+				if (SatMassCut and Sat[STELLARMASS] < sat_mass_cutoff) or (ProjectionCut and Distance2D(GroupID, SatID) < (1/2)*Group[RVIR]):
+					velocities[0].append(v)
+
+				elif (SatMassCut and Sat[STELLARMASS] > sat_mass_cutoff) or (ProjectionCut and Distance2D(GroupID, SatID) < Group[RVIR]):
+					velocities[1].append(v)
+				else:
+					velocities.append(v)
+	return Velocities
+	
+# Returns the labels for {data} containing a short description, mean and std. dev of the {data}	
+# Call only if {satMassCut} or {ProjectionCut}	
+def GetLabels(data):
+	labels = []
+	if SatMassCut:
+		text = "Satellites {x} {cutoff} M\odot\n$\mu =${mu}; $\sigma =${sigma}"
+		labels = [text.format(x = "below", cutoff = '%.2e'%sat_mass_cutoff, mu = '%.3f'% np.mean(data[0]), sigma = '%.3f'% np.std(data[1])),text.format(x = "above", cutoff ='%.2e'% sat_mass_cutoff, mu = '%.3f'% np.mean(data[1]), sigma ='%.3f'%  np.std(data[0]))]
+	if ProjectionCut:
+		text = "Satellites within {fr}Rvir\n$\mu = ${mu}; $\sigma = ${sigma}"
+		labels = [text.format(fr = "half of ", mu = '%.3f'%np.mean(data[0]), sigma = '%.3f'%np.std(data[0])), text.format(fr = "", mu = '%.3f'%np.mean(data[1]), sigma = '%.3f'%np.std(data[1]))]
+	return labels
+
+# Creates a plot using the {data}
+def CreatePlot(data, rangeindex = 0):
+	import matplotlib.pyplot as plt
+	labels = []
+	filename = "SubFind_VF"
+	title = "Velocity function of SubFind satellites"
+	# If {rangeindex} == 0, then there is not masscut
+	if not rangeindex == 0:
+		filename = "Range{Index}/Range{Index}_" + filename
+		title = "Range {Index}: " + title
+	if Vpeak_cut:
+		filename += "_VpeakCut"
+		title = " with Vmax > {vp}".format(vp = Vpeak)
+	if AbsoluteVx:
+		filename += "_AbsoluteVx"
+		title = " using absolute relative velocity"
+	if SatMassCut:
+		filename += "_MassCut"
+		labels = GetLabels(data)
+	if ProjectionCut:
+		filename += "_ProjectionCut"
+		labels = GetLabels(data)
+
+	fig, ax = plt.subplots()	
+	if len(labels) > 0:
+		n, bins, patches = ax.hist(data, n_bins, normed = 1, histtype = 'bar', label = labels)
+		ax.legend(prop = {'size':10})
+	else:
+		n, bins, patches = ax.hist(data, n_bins, normed = 1, histtype = 'bar')
+
+	ax.set_xlabel('Vx (km/s) of satellites')
+	ax.set_ylabel('Probability')
+	plt.grid(True)
+	fig.set_size_inches(10,10)
+	ax.set_title(title)
+	plt.savefig(filename+".png")
+	plt.close()
+
+
+#---------------------------------------------MAIN-----------------------------------------------------
+# See if dividing by range or not
+if HostMassCut:
+	for i in range(1,4):
+		c.execute("SELECT Groups.GroupID, GroupVel.X, Groups.StellarMass, GroupPos.X, GroupPos.Y, GroupPos.Z, Groups.GroupNsubs, Groups.GroupFirstSub, Groups.Group_R_Crit200 FROM Range{index} INNER JOIN Groups ON Range{index}.GroupID = Groups.GroupID INNER JOIN GroupVel ON Groups.GroupID = GroupVel.GroupID INNER JOIN GroupPos ON Groups.GroupID = GroupPos.GroupID".format(index = i))
+		Halos = c.fetchall()
+		data = GetVelocities(Halos)
+		CreatePlot(data, i)
+else:
+	c.execute("SELECT Groups.GroupID, GroupVel.X, Groups.StellarMass, GroupPos.X, GroupPos.Y, GroupPos.Z, Groups.GroupNsubs, Groups.GroupFirstSub, Groups.Group_R_Crit200 FROM Groups INNER JOIN GroupVel ON Groups.GroupID = GroupVel.GroupID INNER JOIN GroupPos ON Groups.GroupID = GroupPos.GroupID")
+	Halos = c.fetchall()
+	data = GetVelocities(Halos)
+	CreatePlot(data)
+			
+
+# Close the connection
+conn.commit()
+conn.close()
+		
+		
+	

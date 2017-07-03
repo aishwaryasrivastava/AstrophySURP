@@ -1,0 +1,102 @@
+#------------------------------------------SETUP---------------------------------------------------
+import sqlite3
+import os
+import sys
+import numpy
+import random
+from numpy import * 
+from numpy import linalg
+import scipy
+from scipy.optimize import brentq
+import pylab as pl
+
+import matplotlib.mlab as mlab
+import numpy as np
+np.seterr(divide = 'ignore', invalid = 'ignore')
+
+# Connecting to the database
+conn = sqlite3.connect('../ILLUSTRIS.db')
+c = conn.cursor()
+
+#-----------------------------------------INPUTS------------------------------------------------
+
+# TO-DO: Check for input validity
+n_bins = 200
+host_count = 400
+# Number of bins
+user_input = raw_input("\nEnter no. of bins (Press Enter for default = {Def}): ".format(Def = n_bins))
+if not len(user_input) == 0:
+	n_bins = int(user_input)
+
+# Sample size
+user_input = raw_input("\nEnter set size (Press Enter for default = {Def}): ".format(Def = host_count))
+if not len(user_input) == 0:
+	host_count = int(user_input)
+
+# Returns a list of {Count} random elements from {List}
+def RandomElements(List, Count):
+	print "\nFinding random elements..."
+	# List of chosen elements
+	Chosen = []
+	for i in range(Count):
+		# Pick a random element from {List}
+		i = random.choice(len(List))
+		# If {i} is already chosen, pick another
+		while i in Chosen:
+			i = random.choice(len(List))
+		# Once a unique element {i} is chosen, add it to the list		
+		Chosen.append(i)
+	return Chosen
+for i in range(1,4):
+	Vmax = []
+	Mass = []
+	c.execute("SELECT Groups.GroupID, Groups.Group_M_Crit200 FROM Groups INNER JOIN RefinedGroups ON Groups.GroupID = RefinedGroups.GroupID INNER JOIN Range{Index} ON Range{Index}.GroupID = Groups.GroupID".format(Index = i))
+	Groups = c.fetchall()
+	c.execute("SELECT SubhaloVmax, SubhaloGrNr, StellarMass from Subhalos")
+	Subhalos = c.fetchall()
+
+	RandomHosts = RandomElements(Groups, host_count)
+	barwidth = 50
+	fraction = host_count/(barwidth-1)
+	sys.stdout.write("Creating Vmax histogram:\t[%s]"%(" "*barwidth))
+	sys.stdout.flush()
+	sys.stdout.write("\b"*(barwidth+1))
+
+	for i in range(0,host_count):
+		if i%fraction == 0:
+			sys.stdout.write("#")
+			sys.stdout.flush()
+		Mass.append(Groups[i][1])
+		GroupID = Groups[i][0]
+		Satellites = [S for S in Subhalos if S[1] == GroupID]
+		# Find the biggest subhalo in the group
+
+		BiggestSubhalo = Satellites[0]	
+		for Subhalo in Satellites:
+			if Subhalo[2] > BiggestSubhalo[2]:
+				BiggestSubhalo = Subhalo
+		Vmax.append(Subhalo[0])
+
+	print "\n"
+	import matplotlib.pyplot as plt
+	fig, ax = plt.subplots()	
+	n, bins, patches = ax.hist(Vmax, n_bins, normed = 1, histtype = 'stepfilled')
+	ax.set_xlabel('Vmax (km/s) of Groups')
+	ax.set_ylabel('Probability')
+	plt.grid(True)
+	fig.set_size_inches(10,10)
+	ax.set_title("Maximum velocity of {count} random dark matter groups\nMedian = {med}".format(count = host_count, med = numpy.median(Vmax)))
+	plt.savefig("VmaxHistogram.png")
+	plt.close()
+
+	import matplotlib.pyplot as plt
+	fig, ax = plt.subplots()	
+	n, bins, patches = ax.hist(Mass, n_bins, normed = 1, histtype = 'stepfilled')
+	ax.set_xlabel('Virial mass of Groups (Msun)')
+	ax.set_ylabel('Probability')
+	plt.grid(True)
+	fig.set_size_inches(10,10)
+	ax.set_title("Virial halo mass of {count} random dark matter groups\nMedian = {med}".format(count = host_count, med = numpy.median(Mass)))
+	plt.savefig("MassHistogram.png")
+	plt.close()		
+
